@@ -139,7 +139,7 @@ var timeframe;
 var activity;
 var gender;
 var calIntakeGoal;
-var receiptDict = {};
+var receiptDict = [{quantity: "2", name: "Pumpkin pie", serving: "1/6th slice", weight: 109.0, calories: 229.0, sodium: 307.0, proteing: 4.0, sugar: 15.0, carbs: 30.0, img: "img.jpg"}];
 
 // FUNCTIONS
 function values() {
@@ -153,6 +153,7 @@ function values() {
    var act = document.getElementById('activity').value;
    activity = parseInt(act);
    var g = document.getElementsByName('gender');
+   var valid = 0;
    // Checks if a gender is selected
    for (var i = 0; i < 2; i++) {
       if (g[i].checked) {
@@ -174,6 +175,7 @@ function values() {
       height = parseInt(h);
       weight = parseInt(w);
       idealWeight = parseInt(iW);
+      valid++;
    }
 
    // Checks if input is "healthy"
@@ -205,13 +207,17 @@ function values() {
 
    var weightChange = (idealWeight - weight);
    var poundsPerWeek = weightChange / timeframe;
-   console.log(poundsPerWeek);
    if (poundsPerWeek < -2 || poundsPerWeek > 2) {
       document.getElementById('healthError').innerText = "This exceeds the recommended pounds needed to be lost/gained per week, please note that this is an unhealthy weight loss goal!"
    } else {
       // 3500 comes from average calories per pound
-      calIntakeGoal =  (-calBurned) + int((poundsPerWeek / 7) * 3500);
+      calIntakeGoal =  (-calBurned) + ((poundsPerWeek / 7) * 3500);
       document.getElementById('healthError').innerText = "";
+      valid++;
+   }
+
+   if (valid == 2) {
+      window.scrollBy(0, 1000);
    }
 }
 
@@ -254,7 +260,7 @@ function changeTab() {
       var proteing = dictionary[i].proteing;
       var carbs = dictionary[i].carbs;
       var img = dictionary[i].img; 
-     
+      
       // Creates child elements in container
       var nameNode = document.createElement('h3');
       nameNode.innerText = name;
@@ -263,50 +269,47 @@ function changeTab() {
       servNode.innerText = "Serving: " + serving;
 
       var weightNode = document.createElement('p');
-      weightNode.innerText = "Weight: " + weight;
+      weightNode.innerText = "Weight(g): " + weight;
 
       var imgNode = document.createElement('img');
       imgNode.setAttribute('src', img);
 
       var calNode = document.createElement('p');
-      calNode.innerText = "Calories: " + calories;
+      calNode.innerText = "Calories(kcal): " + calories;
 
       var sodiumNode = document.createElement('p');
-      sodiumNode.innerText = "Sodium: " + sodium;
+      sodiumNode.innerText = "Sodium(mg): " + sodium;
 
       var sugarNode = document.createElement('p');
-      sugarNode.innerText = "Sugar: " + sugar;
+      sugarNode.innerText = "Sugar(g): " + sugar;
 
       var proteinNode = document.createElement('p');
-      proteinNode.innerText = "Protein: " + proteing;
+      proteinNode.innerText = "Protein(g): " + proteing;
 
       var carbsNode = document.createElement('p');
-      carbsNode.innerText = "Carbohydrates: " + carbs;
+      carbsNode.innerText = "Carbohydrates(g): " + carbs;
      
+
+      var qNode = document.createElement('h4');
+      qNode.setAttribute('id', name);
+      let receiptDictObj = receiptDict.find(o => o.name == name);
+      if (receiptDictObj) {
+         qNode.innerText = receiptDictObj.quantity;
+      } else {
+         qNode.innerText = "0";
+      }
+
       var addNode = document.createElement('button');
-      addNode.setAttribute('type', 'button');
-      addNode.setAttribute('onclick', "add(\'" + name + "\')");
+      addNode.setAttribute('onclick', "testadd(\'" + name + "\', \'" + dictionary + "\')");
       addNode.innerText = "+";
 
-      var subtractNode = document.createElement('button');
-      subtractNode.setAttribute('type', 'button');
-      subtractNode.setAttribute('onclick', "subtract(\'" + name + "\')");
-      subtractNode.innerText = "-";
-
-      var quantityNode = document.createElement('h4')
-      if (name in receiptDict){
-         quantityNode.innerText = String(receiptDict[name])
-      }
-      else{
-         quantityNode.innerText = "0"
-      }
-      quantityNode.setAttribute("id", name)
-
-
+      var subNode = document.createElement('button');
+      subNode.setAttribute('onclick', "testsub(\'" + name + "\')");
+      subNode.innerText = "-";
 
       // Creates container and appends children
       var node = document.createElement('div');
-      node.append(nameNode, servNode, weightNode, imgNode, calNode, sodiumNode, sugarNode, proteinNode, carbsNode, subtractNode, quantityNode, addNode);
+      node.append(nameNode, servNode, weightNode, imgNode, calNode, sodiumNode, sugarNode, proteinNode, carbsNode, qNode, addNode, subNode);
       node.setAttribute('class', 'container');
 
       // Adds container to directory
@@ -314,22 +317,50 @@ function changeTab() {
    }
 }
 
-// Function adds to the total food count
+function testadd(foodname, category) {
+   console.log(category);
+   let receiptDictObj = receiptDict.find(o => o.name == foodname);
+   if (receiptDictObj) {
+      receiptDictObj.quantity++; 
+      document.getElementById(receiptDictObj.name).innerText = receiptDictObj.quantity;
+   } else {
+      let newfood = category.find(a => a.name == foodname);
+      receiptDict.push(newfood);
+      newfood.quantity = "1"; 
+      document.getElementById(newfood.name).innerText = newfood.quantity;
+   }
+   
+}
+
+function testsub(foodname) {
+   let receiptDictObj = receiptDict.find(o => o.name == foodname);
+   if (receiptDictObj) {
+      if (receiptDictObj.quantity <= 1) {
+         document.getElementById(receiptDictObj.name).innerText = 0;
+      } else {
+         receiptDictObj.quantity--; 
+         document.getElementById(receiptDictObj.name).innerText = receiptDictObj.quantity;
+      }     
+   } else {
+      return;
+   }
+}
+
+// Adds to the total food count
 function add(food){
    // Changes the container quantity display text
    var quantity = document.getElementById(food);
    var newQuantity = parseInt(quantity.innerHTML) + 1;
    quantity.innerHTML = String(newQuantity);
 
-
    if (food in receiptDict){
       receiptDict[food] += 1;
-   } else{
+   } else {
       receiptDict[food] = 1;
    }
 }
 
-// Function adds to the total food count
+// Adds to the total food count
 function subtract(food){
    // Changes the container quantity display text
    var quantity = document.getElementById(food);
@@ -342,53 +373,33 @@ function subtract(food){
    if (food in receiptDict){
       if (receiptDict[food] == 1){
          delete receiptDict[food];
-      } else{
+      } else {
          receiptDict[food] -= 1;
       }
    }  
 }
 
-// // Toggles data in container elements on click (adds style, checked attribute and name)
-// function check() {
-//    var name = event.target.querySelector('h3').innerText;
-//    var attrName = "data-name=\"" + name + "\""; 
-//    event.target.toggleAttribute('checked');
-//    event.target.classList.toggle('checked');
-//    if (event.target.getAttribute('data-name') != null) {
-//       event.target.removeAttribute('data-name');
-//    } else {
-//       event.target.setAttribute('data-name', name);
-//    }
-// }
-
-// // Unchecks all
-// function uncheck() {
-//    var directory = document.getElementById('directory');
-//    var len = directory.childElementCount;
-//    console.log(len);
-//    for (var i = 0; i < len; i++) {
-//       console.log(directory.childNodes[i]);
-//       if (directory.childNodes[i].getAttribute('checked') != null) {
-//          directory.childNodes[i].removeAttribute('checked');
-//          directory.childNodes[i].classList.remove('checked');
-//       }
-//    }
-//}
-
 // Generate receipt based on quantities in receiptDict
 function receipt() {
-   var list = document.getElementById('receiptItems');
-   list.innerHTML = "";
-   for (foods in receiptDict){
-      alert
-      list.innerHTML += "<li>" + foods + " Quantity:" + String(receiptDict[foods]) + "</li>";
+   var foodList = document.getElementById('receiptFood');
+   var calList = document.getElementById('receiptCal');
+   foodList.innerHTML = "<li>Qtn &emsp; Food Items</li>";
+   calList.innerHTML = "<li>Calories</li>";
+
+   for (foods in receiptDict) {
+      foodList.innerHTML += "<li>" + String(receiptDict[foods]) + "&emsp;&emsp;&ensp;" + foods + "</li>"
+      calList.innerHTML += "<li>" + "cal" + "</li>"
    }
+   foodList.innerHTML += "<li> =========================</li><li>Total</li>"
+   calList.innerHTML += "<li>=========</li><li>" + "total cal" + "</li>";
 }
 
 // Resets receipt
 function receiptReset() {
-   var list = document.getElementById('receiptItems');
-   list.innerHTML = "";
+   var foodList = document.getElementById('receiptFood');
+   var calList = document.getElementById('receiptCal');
+   foodList.innerHTML = "";
+   calList.innerHTML = "";
    receiptDict = {};
    changeTab();
 }
